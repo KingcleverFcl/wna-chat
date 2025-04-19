@@ -1,56 +1,52 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-# Главное меню
-main_menu_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="🔍 Поиск")],
-        [KeyboardButton(text="🚫 Черный список")],
-        [KeyboardButton(text="⚙️ Настройки")],
-        [KeyboardButton(text="✉️ Личные сообщения")],
-        [KeyboardButton(text="🧾 Сгенерировать код")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выберите действие:"
-)
+def main_menu_kb(lang: str) -> ReplyKeyboardMarkup:
+    texts = {
+        "en": ["Dialogs", "Search", "Settings", "Blacklist"],
+        "ru": ["Диалоги", "Поиск", "Настройки", "Чёрный список"],
+        "zh": ["对话", "搜索", "设置", "黑名单"],
+        "es": ["Diálogos", "Buscar", "Ajustes", "Lista negra"]
+    }
+    buttons = [KeyboardButton(text=t) for t in texts.get(lang, texts["en"])]
+    builder = ReplyKeyboardBuilder()
+    for btn in buttons:
+        builder.add(btn)
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
 
-# Меню настроек
-settings_menu_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="📝 Смена ника")],
-        [KeyboardButton(text="🌐 Смена языка")],
-        [KeyboardButton(text="🔙 Назад")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Настройки профиля:"
-)
+def settings_menu_kb(lang: str) -> ReplyKeyboardMarkup:
+    texts = {
+        "en": ["Nickname", "Language", "Back"],
+        "ru": ["Ник", "Язык", "Назад"],
+        "zh": ["昵称", "语言", "返回"],
+        "es": ["Apodo", "Idioma", "Atrás"]
+    }
+    buttons = [KeyboardButton(text=t) for t in texts.get(lang, texts["en"])]
+    builder = ReplyKeyboardBuilder()
+    for btn in buttons:
+        builder.add(btn)
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
 
-# Языковая клавиатура
-language_selection_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Русский 🇷🇺"), KeyboardButton(text="English 🇬🇧")],
-        [KeyboardButton(text="中文 🇨🇳"), KeyboardButton(text="Español 🇪🇸")],
-        [KeyboardButton(text="🔙 Назад")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выберите язык:"
-)
+def language_selection_kb() -> ReplyKeyboardMarkup:
+    buttons = [
+        "English", "Русский", "中文", "Español"
+    ]
+    builder = ReplyKeyboardBuilder()
+    for btn in buttons:
+        builder.add(KeyboardButton(text=btn))
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)
 
-# Клавиатура при смене ника (только кнопка «Отмена»)
-nickname_cancel_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="🔙 Назад")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Введите новый ник:"
-)
-
-# Меню генерации кода
-generate_code_kb = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="🎰 Генерация Casino")],
-        [KeyboardButton(text="🐱 Генерация Cat")],
-        [KeyboardButton(text="🔙 Назад")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выберите платформу:"
-)
+def back_kb(lang: str) -> ReplyKeyboardMarkup:
+    texts = {
+        "en": "Back",
+        "ru": "Назад",
+        "zh": "返回",
+        "es": "Atrás"
+    }
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=texts.get(lang, "Back"))]],
+        resize_keyboard=True
+    )
