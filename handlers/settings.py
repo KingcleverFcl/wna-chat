@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, Dispatcher
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
@@ -73,22 +73,10 @@ async def save_language(message: Message, state: FSMContext):
     text = message.text.strip().lower()
 
     language_map = {
-        "english": "en",
-        "английский": "en",
-        "英语": "en",
-        "inglés": "en",
-        "russian": "ru",
-        "русский": "ru",
-        "俄语": "ru",
-        "ruso": "ru",
-        "chinese": "zh",
-        "китайский": "zh",
-        "中文": "zh",
-        "chino": "zh",
-        "spanish": "es",
-        "испанский": "es",
-        "西班牙语": "es",
-        "español": "es"
+        "english": "en", "английский": "en", "英语": "en", "inglés": "en",
+        "russian": "ru", "русский": "ru", "俄语": "ru", "ruso": "ru",
+        "chinese": "zh", "китайский": "zh", "中文": "zh", "chino": "zh",
+        "spanish": "es", "испанский": "es", "西班牙语": "es", "español": "es"
     }
 
     settings = await get_user_settings(user_id)
@@ -105,3 +93,7 @@ async def save_language(message: Message, state: FSMContext):
         await open_settings_menu(message, state)
     else:
         await message.answer(MESSAGES[lang]["invalid_language"])
+
+
+def register_settings(dp: Dispatcher):
+    dp.include_router(router)
