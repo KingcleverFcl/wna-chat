@@ -2,88 +2,106 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from states.user_states import MainMenuSettingsState, MainMenuSettingsNicknameState, MainMenuSettingsLanguageState
-from keyboards.reply import settings_menu_kb, language_selection_kb, main_menu_kb
-from database.models import get_user_by_id, update_user_language, update_user_nickname, is_nickname_taken
+from states.user_states import SettingsState
+from keyboards.reply import settings_menu_kb, language_selection_kb, back_kb
+from database.models import get_user_settings, update_nickname, update_language
+from messages import MESSAGES
 
 router = Router()
 
 
-# Вход в меню настроек
-@router.message(F.text == "Настройки")
-async def settings_menu(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsState.settings)
-    await message.answer("Настройки:", reply_markup=settings_menu_kb)
-
-
-# Назад из меню настроек в главное меню
-@router.message(MainMenuSettingsState.settings, F.text == "Назад")
-async def settings_cancel(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsState.main_menu)
-    await message.answer("Вы вернулись в главное меню.", reply_markup=main_menu_kb)
-
-
-# Смена ника — вход
-@router.message(MainMenuSettingsState.settings, F.text == "Смена ника")
-async def change_nickname_start(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsNicknameState.waiting_for_nickname)
-    await message.answer("Введите новый ник:")
-
-
-# Смена ника — отмена
-@router.message(MainMenuSettingsNicknameState.waiting_for_nickname, F.text == "Назад")
-async def change_nickname_cancel(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsState.settings)
-    await message.answer("Отменено. Настройки:", reply_markup=settings_menu_kb)
-
-
-# Смена ника — обработка ввода
-@router.message(MainMenuSettingsNicknameState.waiting_for_nickname)
-async def process_new_nickname(message: Message, state: FSMContext):
-    new_nickname = message.text.strip()
+@router.message(F.text.lower() == "settings")
+async def open_settings_menu(message: Message, state: FSMContext):
     user_id = message.from_user.id
+    settings = await get_user_settings(user_id)
+    lang = settings.language if settings else "en"
 
-    if await is_nickname_taken(new_nickname):
-        await message.answer("❌ Ник уже занят. Попробуйте другой:")
+    await message.answer(
+        MESSAGES[lang]["settings_menu"],
+        reply_markup=settings_menu_kb(lang)
+    )
+    await state.set_state(SettingsState.menu)
+
+
+@router.message(SettingsState.menu, F.text.lower().in_(["nickname", "ник", "昵称", "apodo"]))
+async def change_nickname(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    settings = await get_user_settings(user_id)
+    lang = settings.language if settings else "en"
+
+    await message.answer(MESSAGES[lang]["ask_nickname"], reply_markup=back_kb(lang))
+    await state.set_state(SettingsState.nickname)
+
+
+@router.message(SettingsState.nickname)
+async def save_nickname(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    nickname = message.text.strip()
+
+    settings = await get_user_settings(user_id)
+    lang = settings.language if settings else "en"
+
+    if nickname.lower() == MESSAGES[lang]["back"].lower():
+        await open_settings_menu(message, state)
         return
 
-    await update_user_nickname(user_id, new_nickname)
-    await state.set_state(MainMenuSettingsState.settings)
-    await message.answer(f"✅ Ник успешно изменён на {new_nickname}.", reply_markup=settings_menu_kb)
+    if not (3 <= len(nickname) <= 20):
+        await message.answer(MESSAGES[lang]["invalid_nickname"])
+        return
+
+    await update_nickname(user_id, nickname)
+    await message.answer(MESSAGES[lang]["nickname_updated"])
+    await open_settings_menu(message, state)
 
 
-# Смена языка — вход
-@router.message(MainMenuSettingsState.settings, F.text == "Смена языка")
-async def change_language_start(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsLanguageState.waiting_for_language)
-    await message.answer("Выберите язык:", reply_markup=language_selection_kb)
+@router.message(SettingsState.menu, F.text.lower().in_(["language", "язык", "语言", "idioma"]))
+async def select_language(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    settings = await get_user_settings(user_id)
+    lang = settings.language if settings else "en"
+
+    await message.answer(
+        MESSAGES[lang]["choose_language"],
+        reply_markup=language_selection_kb()
+    )
+    await state.set_state(SettingsState.language)
 
 
-# Смена языка — отмена
-@router.message(MainMenuSettingsLanguageState.waiting_for_language, F.text == "Назад")
-async def change_language_cancel(message: Message, state: FSMContext):
-    await state.set_state(MainMenuSettingsState.settings)
-    await message.answer("Отменено. Настройки:", reply_markup=settings_menu_kb)
+@router.message(SettingsState.language)
+async def save_language(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    text = message.text.strip().lower()
 
-
-# Смена языка — выбор
-@router.message(MainMenuSettingsLanguageState.waiting_for_language)
-async def process_language_selection(message: Message, state: FSMContext):
-    selected_lang = message.text.strip()
-    valid_languages = {
-        "Русский": "ru",
-        "Английский": "en",
+    language_map = {
+        "english": "en",
+        "английский": "en",
+        "英语": "en",
+        "inglés": "en",
+        "russian": "ru",
+        "русский": "ru",
+        "俄语": "ru",
+        "ruso": "ru",
+        "chinese": "zh",
+        "китайский": "zh",
         "中文": "zh",
-        "Español": "es"
+        "chino": "zh",
+        "spanish": "es",
+        "испанский": "es",
+        "西班牙语": "es",
+        "español": "es"
     }
 
-    if selected_lang not in valid_languages:
-        await message.answer("❌ Неверный язык. Выберите из списка.")
+    settings = await get_user_settings(user_id)
+    lang = settings.language if settings else "en"
+
+    if text == MESSAGES[lang]["back"].lower():
+        await open_settings_menu(message, state)
         return
 
-    lang_code = valid_languages[selected_lang]
-    user_id = message.from_user.id
-
-    await update_user_language(user_id, lang_code)
-    await state.set_state(MainMenuSettingsState.settings)
-    await message.answer("✅ Язык успешно изменён.", reply_markup=settings_menu_kb)
+    selected_lang = language_map.get(text)
+    if selected_lang:
+        await update_language(user_id, selected_lang)
+        await message.answer(MESSAGES[selected_lang]["language_updated"])
+        await open_settings_menu(message, state)
+    else:
+        await message.answer(MESSAGES[lang]["invalid_language"])
