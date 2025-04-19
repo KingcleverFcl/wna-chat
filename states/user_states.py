@@ -1,7 +1,25 @@
 from aiogram.fsm.state import State, StatesGroup
 
-class UserStates(StatesGroup):
-    main_menu = State()
-    main_menu_settings = State()
-    main_menu_settings_nickname = State()
-    main_menu_settings_language = State()
+class MainMenuState(StatesGroup):
+    menu = State()
+
+class SettingsState(StatesGroup):
+    menu = State()
+    nickname = State()
+    language = State()
+
+class DialogState(StatesGroup):
+    search = State()
+    select_user = State()
+    messaging = State()
+
+class BlacklistState(StatesGroup):
+    view = State()
+
+class MessagesState(StatesGroup):
+    view_chats = State()
+    chat_navigation = State()
+    chatting = State()
+
+class CodeGeneratorState(StatesGroup):
+    menu = State()
