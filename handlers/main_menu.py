@@ -2,13 +2,17 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 
-from keyboards.reply import main_menu_keyboard
-from states import MainMenuState
-from translations import get_text
+from keyboards.reply import main_menu_kb
+from states.user_states import MainMenuState
 
-router = Router()
+main_menu_router = Router()
 
-@router.message(F.text.in_({"Главное меню", "Main menu", "主菜单", "Menú principal"}))
-async def show_main_menu(message: Message, state: FSMContext):
-    await state.set_state(MainMenuState.main_menu)
-    await message.answer(get_text("main_menu", message.from_user.language_code), reply_markup=main_menu_keyboard(message.from_user.language_code))
+@main_menu_router.message(F.text.in_([
+    "Главное меню", "Main Menu", "主菜单", "Menú Principal"
+]))
+async def handle_main_menu(message: Message, state: FSMContext):
+    await state.set_state(MainMenuState.menu)
+    await message.answer("Вы в главном меню.", reply_markup=main_menu_kb)
+
+def register_main_menu(router: Router):
+    router.include_router(main_menu_router)
