@@ -1,24 +1,27 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from translations import get_text
+
+def main_menu_keyboard(lang: str) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text=get_text("search", lang))],
+        [KeyboardButton(text=get_text("blacklist", lang))],
+        [KeyboardButton(text=get_text("settings", lang))],
+        [KeyboardButton(text=get_text("private_messages", lang))],
+        [KeyboardButton(text=get_text("generate_code", lang))]
+    ], resize_keyboard=True)
 
 def settings_menu_keyboard(lang: str) -> ReplyKeyboardMarkup:
-    buttons = {
-        "ru": ["Смена ника", "Смена языка", "Назад"],
-        "en": ["Change Nickname", "Change Language", "Back"],
-        "es": ["Cambiar apodo", "Cambiar idioma", "Atrás"],
-        "zh": ["更改昵称", "更改语言", "返回"]
-    }
-    return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text)] for text in buttons.get(lang, buttons["en"])],
-        resize_keyboard=True
-    )
+    return ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text=get_text("change_nickname", lang))],
+        [KeyboardButton(text=get_text("change_language", lang))],
+        [KeyboardButton(text=get_text("back", lang))]
+    ], resize_keyboard=True)
 
-def language_selection_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton("Русский")],
-            [KeyboardButton("English")],
-            [KeyboardButton("Español")],
-            [KeyboardButton("中文")]
-        ],
-        resize_keyboard=True
-    )
+def language_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text="Русский")],
+        [KeyboardButton(text="English")],
+        [KeyboardButton(text="中文")],
+        [KeyboardButton(text="Español")],
+        [KeyboardButton(text="⬅ Назад")]
+    ], resize_keyboard=True)
