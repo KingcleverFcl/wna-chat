@@ -1,7 +1,7 @@
 from aiogram import Router, types
 from aiogram.fsm.context import FSMContext
 from states.user_states import SettingsState
-from keyboards.reply import settings_menu_keyboard, language_selection_keyboard
+from keyboards.reply import settings_menu_kb, language_selection_kb
 from messages import get_text
 from database.models import get_user_language, is_nickname_taken, update_user_nickname, update_user_language
 
