@@ -1,29 +1,37 @@
 import asyncpg
+from typing import Optional
 import os
 
-DB_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-async def get_connection():
-    return await asyncpg.connect(dsn=DB_URL)
+async def connect_db():
+    return await asyncpg.connect(DATABASE_URL)
 
-async def get_user_language(user_id: int) -> str:
-    conn = await get_connection()
-    row = await conn.fetchrow("SELECT language FROM users WHERE user_id = $1", user_id)
+# Получить настройки пользователя
+async def get_user_settings(user_id: int) -> Optional[dict]:
+    conn = await connect_db()
+    row = await conn.fetchrow(
+        "SELECT nickname, language FROM users WHERE user_id = $1", user_id
+    )
     await conn.close()
-    return row["language"] if row else "en"
+    if row:
+        return {"nickname": row["nickname"], "language": row["language"]}
+    return None
 
-async def update_user_language(user_id: int, language: str):
-    conn = await get_connection()
-    await conn.execute("UPDATE users SET language = $1 WHERE user_id = $2", language, user_id)
+# Обновить ник пользователя
+async def update_nickname(user_id: int, new_nickname: str) -> None:
+    conn = await connect_db()
+    await conn.execute(
+        "UPDATE users SET nickname = $1, last_nickname_change = NOW() WHERE user_id = $2",
+        new_nickname,
+        user_id
+    )
     await conn.close()
 
-async def update_user_nickname(user_id: int, nickname: str):
-    conn = await get_connection()
-    await conn.execute("UPDATE users SET nickname = $1 WHERE user_id = $2", nickname, user_id)
+# Обновить язык пользователя
+async def update_language(user_id: int, new_language: str) -> None:
+    conn = await connect_db()
+    await conn.execute(
+        "UPDATE users SET language = $1 WHERE user_id = $2", new_language, user_id
+    )
     await conn.close()
-
-async def nickname_exists(nickname: str) -> bool:
-    conn = await get_connection()
-    row = await conn.fetchrow("SELECT 1 FROM users WHERE nickname = $1", nickname)
-    await conn.close()
-    return row is not None
